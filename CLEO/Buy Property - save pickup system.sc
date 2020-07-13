@@ -24,7 +24,7 @@ SCRIPT_START
                 REMOVE_PICKUP hPickup
                 SET_CHAR_COORDINATES_NO_OFFSET scplayer x y z
                 SET_CHAR_HEADING scplayer 0.0
-                ACTIVATE_SAVE_MENU 
+                ACTIVATE_SAVE_MENU
                 WAIT 2000
                 GOSUB CreatePickupWaitPlayer
             ELSE
@@ -47,7 +47,7 @@ SCRIPT_START
     WHILE LOCATE_CHAR_ANY_MEANS_2D scplayer x y 3.0 3.0 FALSE
         WAIT 0
     ENDWHILE
-    CREATE_PICKUP 1277 5 x y z hPickup
+    CREATE_PICKUP 1277 3 x y z hPickup
     RETURN
 }
 SCRIPT_END

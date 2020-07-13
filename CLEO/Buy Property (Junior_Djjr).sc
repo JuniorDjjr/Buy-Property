@@ -94,7 +94,7 @@ SCRIPT_START
         ENDIF
     ELSE
         IF bOnlySave = TRUE // try to find save pickup then
-            IF GET_PICKUP_THIS_COORD x y z TRUE hPickup
+            IF GET_PICKUP_THIS_COORD saveX saveY saveZ TRUE hPickup
                 GET_PICKUP_MODEL hPickup i
                 IF i = 1277 //pickupsave
                     GOSUB CallAlreadyBought

@@ -21,6 +21,7 @@ SCRIPT_START
         WHILE TRUE
             WAIT 0
             IF HAS_PICKUP_BEEN_COLLECTED hPickup
+                REMOVE_PICKUP hPickup
                 SET_CHAR_COORDINATES_NO_OFFSET scplayer x y z
                 SET_CHAR_HEADING scplayer 0.0
                 ACTIVATE_SAVE_MENU 
@@ -41,7 +42,7 @@ SCRIPT_START
         WAIT 0
     ENDWHILE
     // Way to get out from pickup point
-    // Why 2D? Maybe the player is falling in the same coord eternality,
+    // Why 2D? Maybe the player is falling in the same xy eternality,
     // this way he would be going up and getting the pickup again and again (wtf)
     WHILE LOCATE_CHAR_ANY_MEANS_2D scplayer x y 3.0 3.0 FALSE
         WAIT 0

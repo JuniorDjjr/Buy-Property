@@ -8,9 +8,11 @@ SCRIPT_START
     IF x = 0.0
     AND y = 0.0
     AND z = 0.0
+        WAIT 1000
+        CLEO_CALL WriteGlobalVar 0 (409 0)() // reset ONMISSION during game start
         TERMINATE_THIS_CUSTOM_SCRIPT
     ENDIF
-
+ 
     // A simple save pickup...
     // SAVE_THIS_CUSTOM_SCRIPT is NOT required.
 
@@ -24,7 +26,17 @@ SCRIPT_START
                 REMOVE_PICKUP hPickup
                 SET_CHAR_COORDINATES_NO_OFFSET scplayer x y z
                 SET_CHAR_HEADING scplayer 0.0
+                RESTORE_CAMERA_JUMPCUT
+                SET_CAMERA_BEHIND_PLAYER
+                CLEO_CALL WriteGlobalVar 0 (409 1)()
+                SET_PLAYER_CONTROL 0 FALSE
+                DO_FADE 1 1000
+                WAIT 0
                 ACTIVATE_SAVE_MENU
+                WAIT 500
+                SET_PLAYER_CONTROL 0 TRUE
+                WAIT 500
+                CLEO_CALL WriteGlobalVar 0 (409 0)()
                 WAIT 2000
                 GOSUB CreatePickupWaitPlayer
             ELSE
@@ -51,3 +63,15 @@ SCRIPT_START
     RETURN
 }
 SCRIPT_END
+
+{
+    LVAR_INT var value //In
+    LVAR_INT scriptSpace finalOffset
+
+    WriteGlobalVar:
+    READ_MEMORY 0x00468D5E 4 1 (scriptSpace)
+    finalOffset = var * 4
+    finalOffset += scriptSpace
+    WRITE_MEMORY finalOffset 4 (value) FALSE
+    CLEO_RETURN 0 ()
+}

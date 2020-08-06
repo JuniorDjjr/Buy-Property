@@ -1,7 +1,9 @@
+// You need: https://forum.mixmods.com.br/f16-utilidades/t179-gta3script-while-true-return_true-e-return_false
+// And: https://www.mixmods.com.br/2020/03/CLEOPlus.html
 SCRIPT_START
 {
     LVAR_INT pInString // In
-    LVAR_INT pString iPrice iProfit scplayer hPickup pPickup pStartPickups pEndPickups bAlreadyCreated iSizeOfPickup i j k pStartScriptBuffer bOnlySave hBlip
+    LVAR_INT pString iPrice iProfit scplayer hPickup pPickup pStartPickups pEndPickups bAlreadyCreated iSizeOfPickup i j k pStartScriptBuffer bOnlySave hBlip iUnlockedAfter
     LVAR_FLOAT x y z x2 y2 z2 camX camY camZ saveX saveY saveZ 
     LVAR_TEXT_LABEL tEnableInterior
 
@@ -74,6 +76,10 @@ SCRIPT_START
         ENDIF
     ENDIF
 
+    IF NOT READ_INT_FROM_INI_FILE $pString "Settings" "UnlockedAfter" (iUnlockedAfter)
+        iUnlockedAfter = 0
+    ENDIF
+
     IF READ_STRING_FROM_INI_FILE $pString "Settings" "SavePickupCoord" (pInString)
         IF NOT SCAN_STRING $pInString "%f %f %f" i saveX saveY saveZ
             saveX = 0.0
@@ -83,7 +89,7 @@ SCRIPT_START
     // We can't use SAVE_THIS_CUSTOM_SCRIPT in this case because we are reusing the same script
     // Just checking if pickup is created there is a good way too, I don't like CLEO save system
     bAlreadyCreated = FALSE
-
+ 
     IF GET_PICKUP_THIS_COORD x y z TRUE hPickup
         GET_PICKUP_MODEL hPickup i
         IF i = 1274 // bigdollar 
@@ -93,25 +99,52 @@ SCRIPT_START
             bAlreadyCreated = TRUE
         ENDIF
     ELSE
-        IF bOnlySave = TRUE // try to find save pickup then
-            IF GET_PICKUP_THIS_COORD saveX saveY saveZ TRUE hPickup
-                GET_PICKUP_MODEL hPickup i
-                IF i = 1277 //pickupsave
-                    GOSUB CallAlreadyBought
-                    TERMINATE_THIS_CUSTOM_SCRIPT
-                ENDIF
+        IF GET_PICKUP_THIS_COORD saveX saveY saveZ TRUE hPickup
+            GET_PICKUP_MODEL hPickup i
+            IF i = 1277 //pickupsave
+                GOSUB CallAlreadyBought
+                TERMINATE_THIS_CUSTOM_SCRIPT
             ENDIF
         ENDIF
     ENDIF
 
-    IF bAlreadyCreated = FALSE
-        CREATE_FORSALE_PROPERTY_PICKUP x y z iPrice PROP_3 hPickup
+    GET_INT_STAT 181 i
+    IF i >= iUnlockedAfter
+        k = TRUE
+    ELSE
+        k = FALSE
     ENDIF
 
-    ADD_CLEO_BLIP 31 x y TRUE 255 255 255 255 (hBlip)
+    IF k = TRUE
+        IF bAlreadyCreated = FALSE
+            CREATE_FORSALE_PROPERTY_PICKUP x y z iPrice PROP_3 hPickup
+        ENDIF
+        ADD_CLEO_BLIP 31 x y TRUE 255 255 255 255 (hBlip)
+    ELSE
+        IF bAlreadyCreated = FALSE
+            CREATE_LOCKED_PROPERTY_PICKUP x y z PROP_4 hPickup
+        ENDIF
+        ADD_CLEO_BLIP 32 x y TRUE 255 255 255 255 (hBlip)
+    ENDIF
 
-    WHILE NOT HAS_PICKUP_BEEN_COLLECTED hPickup
+    WHILE TRUE
         WAIT 0
+        IF k = FALSE // locked
+            GET_INT_STAT 181 i
+            IF i >= iUnlockedAfter
+                k = TRUE
+                // recreate if unlocked now
+                REMOVE_PICKUP hPickup
+                REMOVE_CLEO_BLIP hBlip
+                CREATE_FORSALE_PROPERTY_PICKUP x y z iPrice PROP_3 hPickup
+                ADD_CLEO_BLIP 31 x y TRUE 255 255 255 255 (hBlip)
+            ENDIF
+        ELSE
+            IF HAS_PICKUP_BEEN_COLLECTED hPickup
+                REMOVE_PICKUP hPickup
+                BREAK
+            ENDIF
+        ENDIF
     ENDWHILE
 
     REMOVE_CLEO_BLIP hBlip
@@ -125,8 +158,6 @@ SCRIPT_START
     PLAY_MISSION_PASSED_TUNE 2
     INCREMENT_INT_STAT 15 iPrice
     PRINT_BIG BUYPRO 5000 2
-    iPrice *= -1
-    ADD_SCORE 0 iPrice
     
     STREAM_CUSTOM_SCRIPT $pStartScriptBuffer 1
     WAIT 0
